@@ -1,0 +1,45 @@
+
+const HeroSection = () => {
+  return (
+    <section className="bg-green-100/60 pt-25 pb-20">
+      <div className="container mx-auto px-4 sm:px-8">
+        {/* This is the grid container. On medium screens (md) and up, it becomes a 2-column grid.
+            On small screens, it defaults to a single column, stacking the text and image. */}
+        <div className="grid md:grid-cols-2 gap-8 items-center">
+          
+          {/* Column 1: Text Content */}
+          <div className="text-center md:text-left">
+            <h1 className="text-4xl md:text-6xl font-extrabold text-gray-800 leading-tight">
+              Healthy Meals,
+              <br />
+              Anytime, Anywhere.
+            </h1>
+            <p className="mt-6 text-lg text-gray-600 max-w-lg mx-auto md:mx-0">
+              Welcome to SEA Catering! We provide delicious, customizable, and healthy meals delivered straight to your door, anywhere across Indonesia.
+            </p>
+            <div className="mt-8">
+              {/* Updated button style to match the new theme */}
+              <button className="bg-gray-800 text-white font-bold hover:bg-gray-700 px-8 py-3 rounded-md text-base transition-colors">
+                Explore Meal Plans
+              </button>
+            </div>
+          </div>
+          
+          {/* Column 2: Image Placeholder */}
+          <div className="hidden md:flex justify-center items-center">
+        
+            <img 
+              src="/icons/food.png" 
+              alt="A healthy meal in a bowl" 
+              className="rounded-full shadow-lg w-4/5 object-cover -rotate-15"
+            />
+            
+          </div>
+
+        </div>
+      </div>
+    </section>
+  );
+};
+
+export default HeroSection;
