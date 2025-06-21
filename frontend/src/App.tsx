@@ -6,6 +6,7 @@ import SubscriptionPage from './components/SubscriptionPage';
 import ContactPage from './components/ContactPage';
 import MenuPage from './components/MenuPage';
 import React from 'react';
+import TestimonialsSection from './components/TestimonialsSection';
 
 export default function App() {
     const [activePage, setActivePage] = React.useState('Home');
@@ -14,6 +15,7 @@ export default function App() {
       <>
         <HeroSection />
         <FeaturesSection />
+        <TestimonialsSection />
       </>
     );
 
