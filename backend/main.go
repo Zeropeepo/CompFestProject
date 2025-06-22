@@ -35,6 +35,8 @@ func main() {
 		api.POST("/subscribe", handlers.SubscribeHandler)
 		api.POST("/testimonials", handlers.CreateTestimonialsHandler)
 		api.GET("/testimonials", handlers.GetTestimonialsHandler)
+		api.POST("/register", handlers.RegisterHandler)
+		api.POST("/login", handlers.LoginHandler)
 	}
 
 	fmt.Println("Backend server is running on http://localhost:8080")

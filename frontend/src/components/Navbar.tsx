@@ -1,21 +1,31 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Menu, X } from 'lucide-react';
 
 type NavbarProps = {
+  isLoggedIn: boolean; 
   activePage: string;
   setActivePage: (page: string) => void;
+  onLogout: () => void; 
 };
 
-const Navbar = ({activePage, setActivePage}: NavbarProps) => {
-  const [isOpen, setIsOpen] = React.useState(false);
+const Navbar = ({ isLoggedIn, activePage, setActivePage, onLogout }: NavbarProps) => {
+  const [isOpen, setIsOpen] = useState(false);
 
-  const navLinks = ["Home", "Menu", "Subscription", "Contact Us"];
+  const navLinks = isLoggedIn
+    ? ["Home", "Menu", "Subscription"] // Links for logged-in users
+    : ["Home", "Menu", "Contact Us"];  // Links for guests
 
-  const handleNavClick = (e: React.MouseEvent, page: string) => {
+    const handleNavClick = (e: React.MouseEvent, page: string) => {
     e.preventDefault();
     setActivePage(page);
-    setIsOpen(false); // Close the mobile menu after clicking a link
+    setIsOpen(false);
   };
+
+  const handleLogoutClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    onLogout();
+    setIsOpen(false);
+  }
 
   return (
     <header className="absolute top-0 left-0 w-full z-10 px-4 sm:px-8 lg:px-16 py-5">
@@ -25,34 +35,36 @@ const Navbar = ({activePage, setActivePage}: NavbarProps) => {
           SEA Catering
         </a>
 
+        {/* --- DESKTOP NAVIGATION --- */}
         <nav className="hidden md:flex items-center space-x-8">
           {navLinks.map((link) => (
-            <a
-              key={link}
-              href="#"
-              onClick={(e) => handleNavClick(e, link)}
-              className={`text-sm font-medium transition-colors hover:text-green-600 ${
-                activePage === link ? 'text-green-600 font-semibold' : 'text-gray-600'
-              }`}
-            >
+            <a key={link} href="#" onClick={(e) => handleNavClick(e, link)} className={`text-sm font-medium transition-colors hover:text-green-600 ${activePage === link ? 'text-green-600 font-semibold' : 'text-gray-600'}`}>
               {link}
             </a>
           ))}
+          {/* --- NEW: Conditional Login/Logout/Register Buttons --- */}
+          {isLoggedIn ? (
+            <button onClick={handleLogoutClick} className="bg-gray-800 text-white font-bold hover:bg-gray-700 px-4 py-2 rounded-md text-sm transition-colors">Logout</button>
+          ) : (
+            <div className="flex items-center space-x-4">
+                <a href="#" onClick={(e) => handleNavClick(e, 'Login')} className="text-sm font-medium text-gray-600 hover:text-green-600">Login</a>
+                <a href="#" onClick={(e) => handleNavClick(e, 'Register')} className="bg-green-600 text-white font-bold hover:bg-green-700 px-4 py-2 rounded-md text-sm transition-colors">Register</a>
+            </div>
+          )}
         </nav>
 
-        {/* Mobile Menu Button */}
+        {/* --- NEW: Mobile Menu Button (fully functional) --- */}
         <div className="md:hidden">
           <button onClick={() => setIsOpen(!isOpen)}>
-            {/* If it's opened show X, else not */}
-            {isOpen ? <X size={24} /> : <Menu size={24} />}
+            <Menu size={24} className="text-gray-800" />
           </button>
         </div>
       </div>
 
-      {/* Mobile Menu (Dropdown) */}
+      {/* --- NEW: Mobile Menu Overlay (fully functional) --- */}
       <div
-        className={`fixed inset-0 bg-black bg-opacity-25 z-40 transition-opacity md:hidden ${
-          isOpen ? "opacity-75" : "opacity-0 pointer-events-none"
+        className={`fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity md:hidden ${
+          isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}
         onClick={() => setIsOpen(false)}
       ></div>
@@ -68,17 +80,21 @@ const Navbar = ({activePage, setActivePage}: NavbarProps) => {
         </div>
         <nav className="flex flex-col p-5 space-y-4">
           {navLinks.map((link) => (
-            <a
-              key={link}
-              href="#"
-              onClick={(e) => handleNavClick(e, link)}
-              className={`text-lg font-medium text-center hover:text-green-600 ${
-                activePage === link ? 'text-green-600 font-semibold' : 'text-gray-700'
-              }`}
-            >
+            <a key={link} href="#" onClick={(e) => handleNavClick(e, link)} className={`text-lg font-medium text-center hover:text-green-600 ${activePage === link ? 'text-green-600 font-semibold' : 'text-gray-700'}`}>
               {link}
             </a>
           ))}
+           {/* --- NEW: Conditional Login/Logout/Register Buttons for Mobile --- */}
+          <div className="border-t pt-4 space-y-3">
+             {isLoggedIn ? (
+                <button onClick={handleLogoutClick} className="w-full bg-gray-800 text-white font-bold py-2 rounded-md text-sm">Logout</button>
+             ) : (
+                <>
+                    <a href="#" onClick={(e) => handleNavClick(e, 'Login')} className="block text-center text-lg font-medium text-gray-700 hover:text-green-600">Login</a>
+                    <a href="#" onClick={(e) => handleNavClick(e, 'Register')} className="block w-full text-center bg-green-600 text-white font-bold py-2 rounded-md text-sm">Register</a>
+                </>
+             )}
+          </div>
         </nav>
       </div>
     </header>

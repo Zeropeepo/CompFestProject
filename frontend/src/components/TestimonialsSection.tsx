@@ -1,6 +1,7 @@
+// Save this file as: src/components/TestimonialsSection.tsx
 import React, { useState, useEffect } from 'react';
 import StarRating from './StarRating';
-import { ChevronLeft, ChevronRight } from 'lucide-react'; 
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 // --- Data Structures ---
 type Testimonial = {
@@ -11,16 +12,23 @@ type Testimonial = {
   avatar: string;
 };
 
-const TestimonialsSection = () => {
+// --- Props Definition ---
+type TestimonialsSectionProps = {
+  isLoggedIn: boolean;
+  setActivePage: (page: string) => void;
+};
+
+const TestimonialsSection = ({ isLoggedIn, setActivePage }: TestimonialsSectionProps) => {
+  // --- State Management ---
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [currentPage, setCurrentPage] = useState(0);
-  const ITEMS_PER_PAGE = 3; 
+  const ITEMS_PER_PAGE = 3;
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'success' | 'error' | null>(null);
   const [newReview, setNewReview] = useState({ name: '', review: '' });
   const [newRating, setNewRating] = useState(0);
 
-
+  // --- Data Fetching Effect ---
   useEffect(() => {
     const fetchTestimonials = async () => {
       try {
@@ -39,23 +47,13 @@ const TestimonialsSection = () => {
     fetchTestimonials();
   }, []);
 
-  // Pagination Logic
+  // --- Pagination Logic ---
   const pageCount = Math.ceil(testimonials.length / ITEMS_PER_PAGE);
-  
-  const handlePrevPage = () => {
-    setCurrentPage((prev) => (prev > 0 ? prev - 1 : 0));
-  };
-  
-  const handleNextPage = () => {
-    setCurrentPage((prev) => (prev < pageCount - 1 ? prev + 1 : prev));
-  };
+  const handlePrevPage = () => setCurrentPage((prev) => (prev > 0 ? prev - 1 : 0));
+  const handleNextPage = () => setCurrentPage((prev) => (prev < pageCount - 1 ? prev + 1 : prev));
+  const currentTestimonials = testimonials.slice(currentPage * ITEMS_PER_PAGE, (currentPage + 1) * ITEMS_PER_PAGE);
 
-  const currentTestimonials = testimonials.slice(
-    currentPage * ITEMS_PER_PAGE,
-    (currentPage + 1) * ITEMS_PER_PAGE
-  );
-
-  // Form Submission Logic 
+  // --- Form Submission Logic ---
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newReview.name || !newReview.review || newRating === 0) {
@@ -92,6 +90,7 @@ const TestimonialsSection = () => {
     }
   };
 
+  // --- JSX (The View) ---
   return (
     <section className="py-20 bg-amber-50">
       <div className="container mx-auto px-4 sm:px-8">
@@ -100,9 +99,9 @@ const TestimonialsSection = () => {
           <p className="text-gray-600 mt-2">Real stories from our happy and healthy community.</p>
         </div>
 
-        {/* Paginated Grid Display */}
+        {/* Display Grid */}
         <div className="relative mb-20 max-w-5xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 min-h-[16rem]">
             {testimonials.length > 0 ? (
               currentTestimonials.map((testimonial) => (
                 <div key={testimonial.id} className="bg-white p-6 rounded-lg shadow-md flex flex-col transition-opacity duration-300">
@@ -117,11 +116,11 @@ const TestimonialsSection = () => {
                 </div>
               ))
             ) : (
-              <p className="text-center text-gray-500 col-span-3">No testimonials yet. Be the first!</p>
+              <p className="text-center text-gray-500 col-span-3 pt-12">No testimonials yet. Be the first!</p>
             )}
           </div>
 
-          {/* Pagination Controls Previous and Next button */}
+          {/* Pagination Controls */}
           {pageCount > 1 && (
             <div className="flex justify-center items-center mt-8 space-x-4">
               <button onClick={handlePrevPage} disabled={currentPage === 0} className="bg-white rounded-full p-2 shadow-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed">
@@ -137,28 +136,43 @@ const TestimonialsSection = () => {
           )}
         </div>
 
-        {/* Form Section */}
+        {/* Conditional Form Rendering */}
         <div className="max-w-2xl mx-auto bg-white p-8 rounded-lg shadow-lg">
-           <h3 className="text-2xl font-bold text-gray-800 mb-6 text-center">Share Your Experience!</h3>
-          <form onSubmit={handleFormSubmit} className="space-y-6">
-            <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">Your Name</label>
-              <input type="text" id="name" value={newReview.name} onChange={(e) => setNewReview({ ...newReview, name: e.target.value })} className="form-input" required />
+          {isLoggedIn ? (
+            <>
+              <h3 className="text-2xl font-bold text-gray-800 mb-6 text-center">Share Your Experience!</h3>
+              <form onSubmit={handleFormSubmit} className="space-y-6">
+                <div>
+                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">Your Name</label>
+                  <input type="text" id="name" value={newReview.name} onChange={(e) => setNewReview({ ...newReview, name: e.target.value })} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-green-500 focus:ring-green-500 focus:outline-none" required />
+                </div>
+                <div>
+                  <label htmlFor="review" className="block text-sm font-medium text-gray-700 mb-1">Review Message</label>
+                  <textarea id="review" rows={4} value={newReview.review} onChange={(e) => setNewReview({ ...newReview, review: e.target.value })} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-green-500 focus:ring-green-500 focus:outline-none" required></textarea>
+                </div>
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium text-gray-700">Your Rating</label>
+                  <StarRating rating={newRating} setRating={setNewRating} />
+                </div>
+                <button type="submit" disabled={isSubmitting} className="w-full bg-green-600 text-white font-bold py-3 px-4 rounded-md hover:bg-green-700 transition-colors disabled:bg-green-300">
+                  {isSubmitting ? 'Submitting...' : 'Submit Testimonial'}
+                </button>
+                {submitStatus === 'success' && <p className="text-green-600 font-semibold text-center mt-2">Thank you! Your review has been submitted.</p>}
+                {submitStatus === 'error' && <p className="text-red-600 font-semibold text-center mt-2">Something went wrong. Please try again.</p>}
+              </form>
+            </>
+          ) : (
+            <div className="text-center">
+              <h3 className="text-2xl font-bold text-gray-800 mb-4">Want to share your story?</h3>
+              <p className="text-gray-600 mb-6">Please log in to leave a review and help others on their health journey.</p>
+              <button
+                onClick={() => setActivePage('Login')}
+                className="bg-green-600 text-white font-bold py-3 px-6 rounded-md hover:bg-green-700 transition-colors"
+              >
+                Login to Review
+              </button>
             </div>
-            <div>
-              <label htmlFor="review" className="block text-sm font-medium text-gray-700 mb-1">Review Message</label>
-              <textarea id="review" rows={4} value={newReview.review} onChange={(e) => setNewReview({ ...newReview, review: e.target.value })} className="form-input" required></textarea>
-            </div>
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-medium text-gray-700">Your Rating</label>
-              <StarRating rating={newRating} setRating={setNewRating} />
-            </div>
-            <button type="submit" disabled={isSubmitting} className="w-full bg-green-600 text-white font-bold py-3 px-4 rounded-md hover:bg-green-700 transition-colors disabled:bg-green-300">
-              {isSubmitting ? 'Submitting...' : 'Submit Testimonial'}
-            </button>
-            {submitStatus === 'success' && <p className="text-green-600 font-semibold text-center mt-2">Thank you! Your review has been submitted.</p>}
-            {submitStatus === 'error' && <p className="text-red-600 font-semibold text-center mt-2">Something went wrong. Please try again.</p>}
-          </form>
+          )}
         </div>
       </div>
     </section>
