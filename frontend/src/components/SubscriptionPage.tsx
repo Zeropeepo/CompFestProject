@@ -40,7 +40,7 @@ const SubscriptionPage = () => {
     setSelectedDays(prev => prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]);
   };
 
-  // --- UPDATED Form Submission Handler ---
+  // HANDLING FORM SUBMISSION
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (selectedMeals.length === 0 || selectedDays.length === 0) {
@@ -95,7 +95,8 @@ const SubscriptionPage = () => {
           </div>
 
           <form onSubmit={handleSubmit} className="grid md:grid-cols-2 gap-x-12 gap-y-8">
-            {/* Left Column remains the same */}
+
+            {/* LEFT COLUMN */}
             <div className="space-y-6">
               <h3 className="text-xl font-bold text-gray-700 border-b pb-2">1. Your Details</h3>
               <div>
@@ -120,7 +121,7 @@ const SubscriptionPage = () => {
               </div>
             </div>
 
-            {/* Right Column has changes for submit button and messages */}
+            {/* RIGHT COLUMN ABOUT MEALS */}
             <div className="space-y-6">
               <h3 className="text-xl font-bold text-gray-700 border-b pb-2">2. Customize Your Meals</h3>
               <div>
@@ -143,7 +144,7 @@ const SubscriptionPage = () => {
               <button type="submit" disabled={isSubmitting} className="w-full bg-gray-800 text-white font-bold py-3 px-4 rounded-md hover:bg-gray-700 transition-colors text-lg disabled:bg-gray-400">
                 {isSubmitting ? 'Submitting...' : 'Subscribe Now'}
               </button>
-              
+
               {/* --- NEW: Success and Error Messages --- */}
               {submitStatus === 'success' && <p className="text-green-600 font-semibold text-center mt-2">Subscription successful! Thank you for your order.</p>}
               {submitStatus === 'error' && <p className="text-red-600 font-semibold text-center mt-2">Something went wrong. Please try again later.</p>}

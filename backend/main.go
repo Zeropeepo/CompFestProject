@@ -33,6 +33,8 @@ func main() {
 	api := router.Group("/api")
 	{
 		api.POST("/subscribe", handlers.SubscribeHandler)
+		api.POST("/testimonials", handlers.CreateTestimonialsHandler)
+		api.GET("/testimonials", handlers.GetTestimonialsHandler)
 	}
 
 	fmt.Println("Backend server is running on http://localhost:8080")
