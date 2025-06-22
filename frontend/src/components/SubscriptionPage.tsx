@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 
-
+// --- Helper Data and Types ---
 type PlanName = 'Diet Plan' | 'Protein Plan' | 'Royal Plan';
-
 const PLAN_PRICES: Record<PlanName, number> = { 'Diet Plan': 30000, 'Protein Plan': 40000, 'Royal Plan': 60000 };
 const MEAL_TYPES = ['Breakfast', 'Lunch', 'Dinner'];
 const DELIVERY_DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
 // --- Main Component ---
 const SubscriptionPage = () => {
+
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [selectedPlan, setSelectedPlan] = useState<PlanName>('Protein Plan');
@@ -16,8 +16,9 @@ const SubscriptionPage = () => {
   const [selectedDays, setSelectedDays] = useState<string[]>(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']);
   const [allergies, setAllergies] = useState('');
   const [totalPrice, setTotalPrice] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState<'success' | 'error' | null>(null);
 
-  // --- Price Calculation Logic ---
   useEffect(() => {
     const planPrice = PLAN_PRICES[selectedPlan];
     const numMealTypes = selectedMeals.length;
@@ -27,46 +28,63 @@ const SubscriptionPage = () => {
       const calculatedPrice = planPrice * numMealTypes * numDeliveryDays * 4.3;
       setTotalPrice(calculatedPrice);
     } else {
-      setTotalPrice(0); 
+      setTotalPrice(0);
     }
   }, [selectedPlan, selectedMeals, selectedDays]);
 
-  // --- Helper Functions for Checkboxes ---
   const handleMealToggle = (meal: string) => {
-    setSelectedMeals(prev =>
-      prev.includes(meal) ? prev.filter(m => m !== meal) : [...prev, meal]
-    );
+    setSelectedMeals(prev => prev.includes(meal) ? prev.filter(m => m !== meal) : [...prev, meal]);
   };
 
   const handleDayToggle = (day: string) => {
-    setSelectedDays(prev =>
-      prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]
-    );
+    setSelectedDays(prev => prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]);
   };
 
-  // --- Form Submission Handler ---
-  const handleSubmit = (e: React.FormEvent) => {
+  // --- UPDATED Form Submission Handler ---
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (selectedMeals.length === 0 || selectedDays.length === 0) {
-        alert("Please select at least one meal type and one delivery day.");
-        return;
+      alert("Please select at least one meal type and one delivery day.");
+      return;
     }
 
-    // For backend later
+    setIsSubmitting(true); 
+    setSubmitStatus(null); 
+
     const submissionData = { name, phone, selectedPlan, selectedMeals, selectedDays, allergies, totalPrice };
-    console.log("Form Submitted:", submissionData);
-    alert(`Subscription created for ${name}! Total Price: ${formatPrice(totalPrice)}/month`);
+
+    try {
+
+      const response = await fetch('http://localhost:8080/api/subscribe', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(submissionData),
+      });
+
+      if (!response.ok) {
+    
+        throw new Error('Network response was not ok.');
+      }
+
+      
+      setSubmitStatus('success');
+
+
+    } catch (error) {
+      console.error("Failed to submit subscription:", error);
+      setSubmitStatus('error');
+    } finally {
+     
+      setIsSubmitting(false);
+    }
   };
 
   const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      minimumFractionDigits: 2,
-    }).format(price);
+    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(price);
   };
 
-  // --- JSX Rendering ---
   return (
     <div className="bg-gray-50">
       <div className="container mx-auto pt-24 pb-16 px-4">
@@ -77,7 +95,7 @@ const SubscriptionPage = () => {
           </div>
 
           <form onSubmit={handleSubmit} className="grid md:grid-cols-2 gap-x-12 gap-y-8">
-            {/* --- Left Column: User Details & Plan --- */}
+            {/* Left Column remains the same */}
             <div className="space-y-6">
               <h3 className="text-xl font-bold text-gray-700 border-b pb-2">1. Your Details</h3>
               <div>
@@ -92,38 +110,26 @@ const SubscriptionPage = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">Select Your Plan *</label>
                 <div className="space-y-2">
                   {(Object.keys(PLAN_PRICES) as PlanName[]).map(plan => (
-                    <label key={plan} className="flex items-center p-4 border rounded-lg cursor-pointer transition-all duration-200" style={{ borderColor: selectedPlan === plan ? '#22c55e' : '#e5e7eb', borderWidth: '2px' }}>
+                    <label key={plan} className="flex items-center p-4 border-2 rounded-lg cursor-pointer transition-all" style={{ borderColor: selectedPlan === plan ? '#22c55e' : '#e5e7eb' }}>
                       <input type="radio" name="plan" value={plan} checked={selectedPlan === plan} onChange={e => setSelectedPlan(e.target.value as PlanName)} className="h-4 w-4 text-green-600 border-gray-300 focus:ring-green-500" />
                       <span className="ml-3 font-medium text-gray-800">{plan}</span>
-                      <span className="ml-auto font-semibold text-green-600">{formatPrice(PLAN_PRICES[plan]).replace(",00", "")}/meal</span>
+                      <span className="ml-auto font-semibold text-green-600">{formatPrice(PLAN_PRICES[plan])}/meal</span>
                     </label>
                   ))}
                 </div>
               </div>
             </div>
 
-            {/* Right Column: Customization & Summary */}
+            {/* Right Column has changes for submit button and messages */}
             <div className="space-y-6">
               <h3 className="text-xl font-bold text-gray-700 border-b pb-2">2. Customize Your Meals</h3>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Meal Type(s) *</label>
-                <div className="grid grid-cols-3 gap-2">
-                    {MEAL_TYPES.map(meal => (
-                        <button type="button" key={meal} onClick={() => handleMealToggle(meal)} className={`p-2 border-2 rounded-md text-sm font-semibold transition-all duration-200 ${selectedMeals.includes(meal) ? 'bg-green-600 text-white border-green-600' : 'bg-white text-gray-700 border-gray-300'}`}>
-                            {meal}
-                        </button>
-                    ))}
-                </div>
+                <div className="grid grid-cols-3 gap-2">{MEAL_TYPES.map(meal => (<button type="button" key={meal} onClick={() => handleMealToggle(meal)} className={`p-2 border-2 rounded-md text-sm font-semibold transition-all ${selectedMeals.includes(meal) ? 'bg-green-600 text-white border-green-600' : 'bg-white text-gray-700 border-gray-300'}`}>{meal}</button>))}</div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Delivery Days *</label>
-                <div className="grid grid-cols-4 gap-2">
-                    {DELIVERY_DAYS.map(day => (
-                        <button type="button" key={day} onClick={() => handleDayToggle(day)} className={`p-2 border-2 rounded-md text-sm font-semibold transition-all duration-200 ${selectedDays.includes(day) ? 'bg-green-600 text-white border-green-600' : 'bg-white text-gray-700 border-gray-300'}`}>
-                            {day.substring(0,3)}
-                        </button>
-                    ))}
-                </div>
+                <div className="grid grid-cols-4 gap-2">{DELIVERY_DAYS.map(day => (<button type="button" key={day} onClick={() => handleDayToggle(day)} className={`p-2 border-2 rounded-md text-sm font-semibold transition-all ${selectedDays.includes(day) ? 'bg-green-600 text-white border-green-600' : 'bg-white text-gray-700 border-gray-300'}`}>{day.substring(0,3)}</button>))}</div>
               </div>
               <div>
                 <label htmlFor="allergies" className="block text-sm font-medium text-gray-700 mb-1">Allergies or Dietary Restrictions (optional)</label>
@@ -134,9 +140,13 @@ const SubscriptionPage = () => {
                 <p className="text-4xl font-extrabold text-green-700 my-2">{formatPrice(totalPrice)}</p>
                 <p className="text-xs text-green-600">Calculated based on your selections. Billed monthly.</p>
               </div>
-              <button type="submit" className="w-full bg-gray-800 text-white font-bold py-3 px-4 rounded-md hover:bg-gray-700 transition-colors text-lg">
-                Subscribe Now
+              <button type="submit" disabled={isSubmitting} className="w-full bg-gray-800 text-white font-bold py-3 px-4 rounded-md hover:bg-gray-700 transition-colors text-lg disabled:bg-gray-400">
+                {isSubmitting ? 'Submitting...' : 'Subscribe Now'}
               </button>
+              
+              {/* --- NEW: Success and Error Messages --- */}
+              {submitStatus === 'success' && <p className="text-green-600 font-semibold text-center mt-2">Subscription successful! Thank you for your order.</p>}
+              {submitStatus === 'error' && <p className="text-red-600 font-semibold text-center mt-2">Something went wrong. Please try again later.</p>}
             </div>
           </form>
         </div>
