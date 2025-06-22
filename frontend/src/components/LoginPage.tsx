@@ -34,13 +34,13 @@ const LoginPage = ({ onLoginSuccess }: LoginPageProps) => {
         throw new Error(responseData.error || 'Login failed. Please check your credentials.');
       }
       
-      // If login is successful, the server sends back a token.
+      // If login success, grab and save JWT and CSRF token.
       const token = responseData.token;
-
-      // Save Token in localStorage for login memory
+      const csrfToken = responseData.csrf; 
       localStorage.setItem('sea-catering-token', token);
+      localStorage.setItem('sea-catering-csrf', csrfToken);
 
-      // We then call the function passed down from App.tsx to update the app's global state.
+      // Call the onLoginSuccess callback from App.tsx with the token
       onLoginSuccess(token);
 
     } catch (err) {

@@ -54,11 +54,14 @@ const SubscriptionPage = () => {
     const submissionData = { name, phone, selectedPlan, selectedMeals, selectedDays, allergies, totalPrice };
 
     try {
-
+      const token = localStorage.getItem('sea-catering-token');
+      const csrfToken = localStorage.getItem('sea-catering-csrf');
       const response = await fetch('http://localhost:8080/api/subscribe', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          'X-CSRF-Token': csrfToken || '',
         },
         body: JSON.stringify(submissionData),
       });

@@ -1,4 +1,3 @@
-// Save this file as: src/components/TestimonialsSection.tsx
 import React, { useState, useEffect } from 'react';
 import StarRating from './StarRating';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -12,11 +11,13 @@ type Testimonial = {
   avatar: string;
 };
 
+
 // --- Props Definition ---
 type TestimonialsSectionProps = {
   isLoggedIn: boolean;
   setActivePage: (page: string) => void;
 };
+
 
 const TestimonialsSection = ({ isLoggedIn, setActivePage }: TestimonialsSectionProps) => {
   // --- State Management ---
@@ -27,6 +28,7 @@ const TestimonialsSection = ({ isLoggedIn, setActivePage }: TestimonialsSectionP
   const [submitStatus, setSubmitStatus] = useState<'success' | 'error' | null>(null);
   const [newReview, setNewReview] = useState({ name: '', review: '' });
   const [newRating, setNewRating] = useState(0);
+
 
   // --- Data Fetching Effect ---
   useEffect(() => {
@@ -47,11 +49,13 @@ const TestimonialsSection = ({ isLoggedIn, setActivePage }: TestimonialsSectionP
     fetchTestimonials();
   }, []);
 
+
   // --- Pagination Logic ---
   const pageCount = Math.ceil(testimonials.length / ITEMS_PER_PAGE);
   const handlePrevPage = () => setCurrentPage((prev) => (prev > 0 ? prev - 1 : 0));
   const handleNextPage = () => setCurrentPage((prev) => (prev < pageCount - 1 ? prev + 1 : prev));
   const currentTestimonials = testimonials.slice(currentPage * ITEMS_PER_PAGE, (currentPage + 1) * ITEMS_PER_PAGE);
+
 
   // --- Form Submission Logic ---
   const handleFormSubmit = async (e: React.FormEvent) => {
@@ -63,12 +67,20 @@ const TestimonialsSection = ({ isLoggedIn, setActivePage }: TestimonialsSectionP
     setIsSubmitting(true);
     setSubmitStatus(null);
     const submissionData = { name: newReview.name, review: newReview.review, rating: newRating };
+    
     try {
+
+      const token = localStorage.getItem('sea-catering-token');
+      const csrfToken = localStorage.getItem('sea-catering-csrf');
       const response = await fetch('http://localhost:8080/api/testimonials', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json',
+                   'Authorization': `Bearer ${token}`,
+                   'X-CSRF-Token': csrfToken || '',
+        },
         body: JSON.stringify(submissionData),
       });
+
       const newDbEntry = await response.json();
       if (!response.ok) throw new Error('Server responded with an error');
       
@@ -82,9 +94,11 @@ const TestimonialsSection = ({ isLoggedIn, setActivePage }: TestimonialsSectionP
       setSubmitStatus('success');
       setNewReview({ name: '', review: '' });
       setNewRating(0);
+
     } catch (error) {
       console.error("Failed to submit testimonial:", error);
       setSubmitStatus('error');
+
     } finally {
       setIsSubmitting(false);
     }

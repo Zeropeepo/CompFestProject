@@ -13,7 +13,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
-	// Using the module path from your code
+	"github.com/google/uuid"
 	"github.com/Zeropeepo/sea-catering-backend/database"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -109,16 +109,26 @@ func LoginHandler(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
 		return
 	}
+	csrfToken := uuid.New().String() 
+
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"sub": userFromDB.ID,
 		"exp": time.Now().Add(time.Hour * 24).Unix(),
+        "csrf": csrfToken,
 	})
+
 	tokenString, err := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not generate token"})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"message": "Login successful!", "token": tokenString})
+
+	// Send BOTH the JWT and the CSRF token back to the frontend
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Login successful!",
+		"token":   tokenString,
+        "csrf":    csrfToken, 
+	})
 }
 
 // Creating a new testimonial

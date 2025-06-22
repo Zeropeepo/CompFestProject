@@ -1,12 +1,9 @@
-import HeroSection from './components/HeroSection';
 import Navbar from './components/Navbar'
-import FeaturesSection from './components/FeaturesSection';
 import Footer from './components/Footer';
 import SubscriptionPage from './components/SubscriptionPage';
 import ContactPage from './components/ContactPage';
 import MenuPage from './components/MenuPage';
 import React, { useEffect } from 'react';
-import TestimonialsSection from './components/TestimonialsSection';
 import HomePage from './components/HomePage';
 import LoginPage from './components/LoginPage';
 import RegisterPage from './components/RegisterPage';
