@@ -45,6 +45,14 @@ func main() {
             protected.POST("/subscribe", handlers.SubscribeHandler)
             protected.POST("/testimonials", handlers.CreateTestimonialsHandler)
 			protected.GET("/me", handlers.GetUserProfileHandler)
+			protected.GET("/subscriptions", handlers.GetUserSubscriptionsHandler)
+			protected.PUT("/subscriptions/:id/status", handlers.UpdateSubscriptionStatusHandler)
+        }
+
+	admin := api.Group("/admin")
+        admin.Use(middleware.AdminMiddleware()) // Protect this whole group
+        {
+            admin.GET("/dashboard-stats", handlers.GetAdminDashboardHandler)
         }
 	
 

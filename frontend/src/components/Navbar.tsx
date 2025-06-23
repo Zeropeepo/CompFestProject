@@ -5,14 +5,15 @@ type NavbarProps = {
   isLoggedIn: boolean; 
   activePage: string;
   setActivePage: (page: string) => void;
-  onLogout: () => void; 
+  onLogout: () => void;
+  userRole?: string; 
 };
 
-const Navbar = ({ isLoggedIn, activePage, setActivePage, onLogout }: NavbarProps) => {
+const Navbar = ({ isLoggedIn, activePage, setActivePage, onLogout, userRole }: NavbarProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const navLinks = isLoggedIn
-    ? ["Home", "Menu", "Subscription"] // Links for logged-in users
+    ? ["Home", "Menu", "Subscription", "Dashboard", "Contact Us", ...(userRole === "admin" ? ["Admin"] : [])] // Links for logged-in users
     : ["Home", "Menu", "Contact Us"];  // Links for guests
 
     const handleNavClick = (e: React.MouseEvent, page: string) => {

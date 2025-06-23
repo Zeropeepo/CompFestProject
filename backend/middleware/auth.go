@@ -5,9 +5,11 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"context"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/Zeropeepo/sea-catering-backend/database"
 )
 
 func AuthMiddleware() gin.HandlerFunc {
@@ -62,4 +64,30 @@ func AuthMiddleware() gin.HandlerFunc {
 
 		c.Next()
 	}
+}
+
+func AdminMiddleware() gin.HandlerFunc {
+    return func(c *gin.Context) {
+        AuthMiddleware()(c)
+        if c.IsAborted() {
+            return
+        }
+
+        userID, _ := c.Get("userID")
+        var role string
+
+        err := database.DB.QueryRow(context.Background(), "SELECT role FROM users WHERE id = $1", userID).Scan(&role)
+        if err != nil {
+            c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "Could not verify user role"})
+            return
+        }
+
+        if role != "admin" {
+            c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "Admin access required"})
+            return
+        }
+
+        // Proceed handler if all check are done
+        c.Next()
+    }
 }

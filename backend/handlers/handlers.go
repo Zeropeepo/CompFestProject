@@ -54,6 +54,80 @@ type UserProfile struct {
 	Role     string `json:"role"`
 }
 
+type UserSubscription struct {
+	ID           int      `json:"id"`
+	PlanName     string   `json:"planName"`
+	MealTypes    []string `json:"mealTypes"`
+	DeliveryDays []string `json:"deliveryDays"`
+	TotalPrice   float64  `json:"totalPrice"`
+	Status       string   `json:"status"`
+}
+
+type AdminDashboardData struct {
+    NewSubscriptions        int     `json:"newSubscriptions"`
+    MonthlyRecurringRevenue float64 `json:"monthlyRecurringRevenue"`
+    ActiveSubscriptions     int     `json:"activeSubscriptions"`
+    Reactivations           int     `json:"reactivations"` 
+}
+
+
+// --- Handlers ---
+
+func GetAdminDashboardHandler(c *gin.Context) {
+    var data AdminDashboardData
+
+    // Get Subscription Count
+    newSubsQuery := `SELECT COUNT(*) FROM subscriptions;`
+    _ = database.DB.QueryRow(context.Background(), newSubsQuery).Scan(&data.NewSubscriptions)
+
+    // Get Monthly Recurring Revenue
+    mrrQuery := `SELECT COALESCE(SUM(total_price), 0) FROM subscriptions WHERE status = 'active';`
+    _ = database.DB.QueryRow(context.Background(), mrrQuery).Scan(&data.MonthlyRecurringRevenue)
+
+    // Get Active Subscriptions
+    activeSubsQuery := `SELECT COUNT(*) FROM subscriptions WHERE status = 'active';`
+    _ = database.DB.QueryRow(context.Background(), activeSubsQuery).Scan(&data.ActiveSubscriptions)
+    
+    //  Get Reactivations (Mock data for now)
+    data.Reactivations = 0 
+
+    c.JSON(http.StatusOK, data)
+}
+
+// Handler for GetUserSubscription
+func GetUserSubscriptionsHandler(c *gin.Context) {
+	userID, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+		return
+	}
+
+	sqlStatement := `
+		SELECT id, plan_name, meal_types, delivery_days, total_price, status
+		FROM subscriptions
+		WHERE user_id = $1
+		ORDER BY created_at DESC`
+
+	rows, err := database.DB.Query(context.Background(), sqlStatement, userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch subscriptions"})
+		return
+	}
+	defer rows.Close()
+
+	subscriptions := make([]UserSubscription, 0)
+	for rows.Next() {
+		var sub UserSubscription
+
+		if err := rows.Scan(&sub.ID, &sub.PlanName, &sub.MealTypes, &sub.DeliveryDays, &sub.TotalPrice, &sub.Status); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to process subscription data"})
+			return
+		}
+		subscriptions = append(subscriptions, sub)
+	}
+	c.JSON(http.StatusOK, subscriptions)
+}
+
 // Handler for GetUserProfile
 
 func GetUserProfileHandler(c *gin.Context) {
@@ -81,7 +155,6 @@ func GetUserProfileHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, userProfile)
 }
 
-// --- Handlers ---
 
 func validatePassword(password string) bool {
 	if len(password) < 8 { return false }
@@ -241,7 +314,7 @@ func SubscribeHandler(c *gin.Context) {
 		sub.SelectedDays,
 		sub.Allergies,
 		sub.TotalPrice,
-		userID.(int), // We assert the type of userID from the context to an int
+		userID.(int),
 	).Scan(&id)
 
 	if err != nil {
@@ -254,4 +327,49 @@ func SubscribeHandler(c *gin.Context) {
 		"message": "Subscription created successfully!",
 		"subscriptionId": id,
 	})
+}
+
+
+func UpdateSubscriptionStatusHandler(c *gin.Context) {
+    userID, exists := c.Get("userID")
+    if !exists {
+        c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+        return
+    }
+
+    // Get the subscription ID from the URL parameter (e.g., /api/subscriptions/123/status)
+    subscriptionID := c.Param("id")
+
+    // Bind the new status from the request body
+    var payload struct {
+        Status string `json:"status" binding:"required"` 
+    }
+
+    if err := c.ShouldBindJSON(&payload); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request. 'status' field is required."})
+        return
+    }
+
+    if payload.Status != "paused" && payload.Status != "cancelled" && payload.Status != "active" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid status value."})
+		return
+	}
+
+    sqlStatement := `
+        UPDATE subscriptions
+        SET status = $1
+        WHERE id = $2 AND user_id = $3`
+
+    result, err := database.DB.Exec(context.Background(), sqlStatement, payload.Status, subscriptionID, userID)
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update subscription status"})
+        return
+    }
+
+    if result.RowsAffected() == 0 {
+        c.JSON(http.StatusNotFound, gin.H{"error": "Subscription not found or you do not have permission to modify it"})
+        return
+    }
+
+    c.JSON(http.StatusOK, gin.H{"message": "Subscription status updated successfully to " + payload.Status})
 }

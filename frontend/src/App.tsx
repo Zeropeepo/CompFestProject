@@ -8,6 +8,8 @@ import ContactPage from './components/ContactPage';
 import RegisterPage from './components/RegisterPage';
 import LoginPage from './components/LoginPage';
 import Footer from './components/Footer';
+import UserDashboardPage from './components/UserDashboardPage';
+import AdminDashboardPage from './components/AdminDashboardPage';
 
 type UserProfile = {
   id: number;
@@ -72,12 +74,18 @@ export default function App() {
         return <MenuPage />;
       case 'Subscription':
         return currentUser ? <SubscriptionPage currentUser={currentUser} /> : <LoginPage onLoginSuccess={handleLoginSuccess} />;
+      case 'Dashboard':
+        return currentUser ? <UserDashboardPage /> : <LoginPage onLoginSuccess={handleLoginSuccess} />;
       case 'Contact Us':
         return <ContactPage />;
       case 'Register':
         return <RegisterPage />;
       case 'Login':
         return <LoginPage onLoginSuccess={handleLoginSuccess} />;
+      case 'Admin':
+        return currentUser && currentUser.role === 'admin' 
+        ? <AdminDashboardPage /> 
+        : <LoginPage onLoginSuccess={handleLoginSuccess} />;
       default:
         return <HomePage currentUser={currentUser} setActivePage={setActivePage} />;
     }
@@ -90,6 +98,7 @@ export default function App() {
         activePage={activePage}
         setActivePage={setActivePage}
         onLogout={handleLogout}
+        userRole={currentUser?.role}
       />
       <main>{renderPage()}</main>
       <Footer />
