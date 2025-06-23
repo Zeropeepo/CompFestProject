@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"github.com/Zeropeepo/sea-catering-backend/database"
@@ -22,7 +21,7 @@ func main() {
 	if err := database.Connect(); err != nil {
 		log.Fatalf("Failed to connect to the database: %v", err)
 	}
-	defer database.DB.Close(context.Background())
+	defer database.DB.Close()
 
 	router := gin.Default()
 

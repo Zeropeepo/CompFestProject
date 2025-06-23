@@ -1,3 +1,4 @@
+
 package database
 
 import (
@@ -5,13 +6,12 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-var DB *pgx.Conn
+var DB *pgxpool.Pool
 
 func Connect() error {
-
 	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s",
 		os.Getenv("DB_USER"),
 		os.Getenv("DB_PASSWORD"),
@@ -22,12 +22,16 @@ func Connect() error {
 	)
 
 	var err error
-	DB, err = pgx.Connect(context.Background(), connStr)
+	
+	DB, err = pgxpool.New(context.Background(), connStr)
 	if err != nil {
-		return fmt.Errorf("Unable to connect to database: %v", err)
+		return fmt.Errorf("Unable to create connection pool: %v", err)
 	}
 
-	fmt.Println("Successfully connected to the database!")
+	if err := DB.Ping(context.Background()); err != nil {
+		return fmt.Errorf("Unable to ping database: %v", err)
+	}
+
+	fmt.Println("Successfully connected to the database pool!")
 	return nil
 }
-

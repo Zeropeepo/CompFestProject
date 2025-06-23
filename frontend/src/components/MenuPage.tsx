@@ -55,8 +55,8 @@ const MenuPage = () => {
   const [selectedPlan, setSelectedPlan] = React.useState<MealPlan | null>(null);
 
   return (
-    <div className="container mx-auto pt-24 p-4 sm:p-8">
-      <div className="text-center mb-16">
+    <div className="container mx-auto pt-28 p-4 sm:p-8">
+      <div className="text-center mb-16 pt-12">
         <h1 className="text-4xl font-extrabold text-gray-800">Our Meal Plans</h1>
         <p className="mt-4 text-lg text-gray-600">Deliciously healthy, crafted for you.</p>
       </div>
@@ -66,7 +66,7 @@ const MenuPage = () => {
   
           <div key={plan.name} className="grid md:grid-cols-2 gap-12 items-center">
 
-            <div className={`flex justify-center ${index % 2 !== 0 ? 'md:order-2' : ''}`}>
+            <div className={`flex justify-center pb-10 ${index % 2 !== 0 ? 'md:order-2' : ''}`}>
               <img src={plan.image} alt={plan.name} className="rounded-lg shadow-xl w-full" />
             </div>
 

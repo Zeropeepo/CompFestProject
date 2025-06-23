@@ -37,7 +37,7 @@ const Navbar = ({ isLoggedIn, activePage, setActivePage, onLogout, userRole }: N
         </a>
 
         {/* --- DESKTOP NAVIGATION --- */}
-        <nav className="hidden md:flex items-center space-x-8">
+        <nav className="hidden md:flex items-center space-x-8 pb-5">
           {navLinks.map((link) => (
             <a key={link} href="#" onClick={(e) => handleNavClick(e, link)} className={`text-sm font-medium transition-colors hover:text-green-600 ${activePage === link ? 'text-green-600 font-semibold' : 'text-gray-600'}`}>
               {link}

@@ -93,40 +93,53 @@ func LoginHandler(c *gin.Context) {
 		ID           int
 		PasswordHash string
 	}
+
+	// FMT for better logging and debugging
+	fmt.Println("--- New Login Attempt ---")
 	if err := c.ShouldBindJSON(&loginCreds); err != nil {
+		fmt.Println("Error: Failed to bind JSON.", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
 		return
 	}
+	fmt.Printf("Received login request for email: '%s'\n", loginCreds.Email)
+
 	sqlStatement := `SELECT id, password_hash FROM users WHERE email = $1`
 	err := database.DB.QueryRow(context.Background(), sqlStatement, loginCreds.Email).Scan(&userFromDB.ID, &userFromDB.PasswordHash)
 	if err != nil {
+		fmt.Printf("Database Error: User not found for email '%s'. Error: %v\n", loginCreds.Email, err)
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
 		return
 	}
+	fmt.Printf("User found in DB with ID: %d. Comparing password...\n", userFromDB.ID)
+
 	err = bcrypt.CompareHashAndPassword([]byte(userFromDB.PasswordHash), []byte(loginCreds.Password))
 	if err != nil {
+		fmt.Printf("CRITICAL: Password comparison failed for user ID %d. Error: %v\n", userFromDB.ID, err)
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
 		return
 	}
-	csrfToken := uuid.New().String() 
+
+	fmt.Printf("Password comparison successful for user ID %d. Generating tokens...\n", userFromDB.ID)
+	csrfToken := uuid.New().String()
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"sub": userFromDB.ID,
-		"exp": time.Now().Add(time.Hour * 24).Unix(),
-        "csrf": csrfToken,
+		"sub":  userFromDB.ID,
+		"exp":  time.Now().Add(time.Hour * 24).Unix(),
+		"csrf": csrfToken,
 	})
 
 	tokenString, err := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
 	if err != nil {
+		fmt.Println("Error: Could not generate token.", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not generate token"})
 		return
 	}
 
-	// Send BOTH the JWT and the CSRF token back to the frontend
+	fmt.Println("Login successful. Sending token and csrf token to frontend.")
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Login successful!",
 		"token":   tokenString,
-        "csrf":    csrfToken, 
+		"csrf":    csrfToken,
 	})
 }
 
