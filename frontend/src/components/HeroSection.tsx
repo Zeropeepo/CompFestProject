@@ -1,10 +1,8 @@
 
 const HeroSection = () => {
   return (
-    <section className="bg-green-100/60 pt-25 pb-20">
+    <section className="bg-green-200/60 pt-25 pb-20">
       <div className="container mx-auto px-4 sm:px-8">
-        {/* This is the grid container. On medium screens (md) and up, it becomes a 2-column grid.
-            On small screens, it defaults to a single column, stacking the text and image. */}
         <div className="grid md:grid-cols-2 gap-8 items-center">
           
           {/* Column 1: Text Content */}
