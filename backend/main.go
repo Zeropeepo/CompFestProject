@@ -28,7 +28,8 @@ func main() {
 
 	config := cors.DefaultConfig()
 	config.AllowOrigins = []string{"http://localhost:5173"} 
-	config.AllowMethods = []string{"POST", "GET", "OPTIONS"}
+	config.AllowMethods = []string{"POST", "GET", "OPTIONS", "PUT", "DELETE"}
+	config.AllowHeaders = []string{"Origin", "Content-Type", "Authorization", "X-CSRF-Token"}
 	router.Use(cors.New(config))
 
 	api := router.Group("/api")
@@ -43,6 +44,7 @@ func main() {
         {
             protected.POST("/subscribe", handlers.SubscribeHandler)
             protected.POST("/testimonials", handlers.CreateTestimonialsHandler)
+			protected.GET("/me", handlers.GetUserProfileHandler)
         }
 	
 

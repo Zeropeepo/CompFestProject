@@ -6,8 +6,19 @@ const PLAN_PRICES: Record<PlanName, number> = { 'Diet Plan': 30000, 'Protein Pla
 const MEAL_TYPES = ['Breakfast', 'Lunch', 'Dinner'];
 const DELIVERY_DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
+type UserProfile = {
+  id: number;
+  fullName: string;
+  email: string;
+  role: string;
+};
+
+type SubscriptionPageProps = {
+  currentUser: UserProfile; 
+};
+
 // --- Main Component ---
-const SubscriptionPage = () => {
+const SubscriptionPage = ({ currentUser }: SubscriptionPageProps) => {
 
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
@@ -51,7 +62,8 @@ const SubscriptionPage = () => {
     setIsSubmitting(true); 
     setSubmitStatus(null); 
 
-    const submissionData = { name, phone, selectedPlan, selectedMeals, selectedDays, allergies, totalPrice };
+    const submissionData = { name: currentUser.fullName, 
+      phone, selectedPlan, selectedMeals, selectedDays, allergies, totalPrice };
 
     try {
       const token = localStorage.getItem('sea-catering-token');
@@ -102,9 +114,10 @@ const SubscriptionPage = () => {
             {/* LEFT COLUMN */}
             <div className="space-y-6">
               <h3 className="text-xl font-bold text-gray-700 border-b pb-2">1. Your Details</h3>
-              <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
-                <input type="text" id="name" value={name} onChange={e => setName(e.target.value)} className="form-mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-green-500 focus:ring-green-500 focus:outline-none" required />
+              <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                  <p className="text-sm font-medium text-gray-500">Subscribing as:</p>
+                  <p className="text-lg font-semibold text-gray-800">{currentUser.fullName}</p>
+                  <p className="text-sm text-gray-600">{currentUser.email}</p>
               </div>
               <div>
                 <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">Active Phone Number *</label>

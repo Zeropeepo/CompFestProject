@@ -12,7 +12,6 @@ import (
 
 func AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// Get JWT from the Authorization header
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Authorization header required"})
@@ -25,7 +24,6 @@ func AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		// Parse and validate the JWT
 		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
@@ -38,22 +36,29 @@ func AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		// CSRF check for state-changing methods (POST, PUT, DELETE)
-		if c.Request.Method == "POST" || c.Request.Method == "PUT" || c.Request.Method == "DELETE" {
-			claims, ok := token.Claims.(jwt.MapClaims)
-			if !ok {
-				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid token claims"})
-				return
-			}
-			// Get CSRF token from header and from JWT
-			headerCsrf := c.GetHeader("X-CSRF-Token")
-			claimCsrf, ok := claims["csrf"].(string)
+		// Extract claims and pass UserID to the context 
+		if claims, ok := token.Claims.(jwt.MapClaims); ok {
+			if userIDFloat, ok := claims["sub"].(float64); ok {
+				userID := int(userIDFloat)
+				c.Set("userID", userID)
+			} else {
+                c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid user ID in token"})
+                return
+            }
 
-			if !ok || headerCsrf == "" || headerCsrf != claimCsrf {
-				c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "CSRF token mismatch"})
-				return
-			}
-		}
+            // Perform CSRF check for state-changing methods
+            if c.Request.Method != "GET" {
+                headerCsrf := c.GetHeader("X-CSRF-Token")
+                claimCsrf, ok := claims["csrf"].(string)
+                if !ok || headerCsrf == "" || headerCsrf != claimCsrf {
+                    c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "CSRF token mismatch"})
+                    return
+                }
+            }
+		} else {
+            c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Could not parse token claims"})
+            return
+        }
 
 		c.Next()
 	}

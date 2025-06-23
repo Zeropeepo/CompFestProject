@@ -24,16 +24,19 @@ type UserRegistration struct {
 	Email    string `json:"email" binding:"required,email"`
 	Password string `json:"password" binding:"required"`
 }
+
 type UserLogin struct {
 	Email    string `json:"email" binding:"required,email"`
 	Password string `json:"password" binding:"required"`
 }
+
 type Testimonials struct {
 	ID     int    `json:"id"`
 	Name   string `json:"name"`
 	Review string `json:"review"`
 	Rating int    `json:"rating"`
 }
+
 type Subscription struct {
 	Name          string   `json:"name"`
 	Phone         string   `json:"phone"`
@@ -44,6 +47,39 @@ type Subscription struct {
 	TotalPrice    float64  `json:"totalPrice"`
 }
 
+type UserProfile struct {
+	ID       int    `json:"id"`
+	FullName string `json:"fullName"`
+	Email    string `json:"email"`
+	Role     string `json:"role"`
+}
+
+// Handler for GetUserProfile
+
+func GetUserProfileHandler(c *gin.Context) {
+	userID, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User ID not found in context"})
+		return
+	}
+
+	var userProfile UserProfile
+	sqlStatement := `SELECT id, full_name, email, role FROM users WHERE id = $1`
+	err := database.DB.QueryRow(context.Background(), sqlStatement, userID.(int)).Scan(
+		&userProfile.ID,
+		&userProfile.FullName,
+		&userProfile.Email,
+		&userProfile.Role,
+	)
+
+	if err != nil {
+        fmt.Printf("Error fetching user profile for ID %v: %v\n", userID, err)
+		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		return
+	}
+
+	c.JSON(http.StatusOK, userProfile)
+}
 
 // --- Handlers ---
 
@@ -181,15 +217,41 @@ func SubscribeHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request data: " + err.Error()})
 		return
 	}
-	sqlStatement := `INSERT INTO subscriptions (name, phone_number, plan_name, meal_types, delivery_days, allergies, total_price) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`
+
+	// Get the user ID from the context that the middleware set for us.
+	userID, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization context not found"})
+		return
+	}
+
+	// UPDATED SQL statement to include the new user_id column.
+	sqlStatement := `
+		INSERT INTO subscriptions (name, phone_number, plan_name, meal_types, delivery_days, allergies, total_price, user_id)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		RETURNING id`
+	
 	var id int
+	// Pass the userID as the 8th parameter to the query.
 	err := database.DB.QueryRow(context.Background(), sqlStatement,
-		sub.Name, sub.Phone, sub.SelectedPlan, sub.SelectedMeals, sub.SelectedDays, sub.Allergies, sub.TotalPrice,
+		sub.Name,
+		sub.Phone,
+		sub.SelectedPlan,
+		sub.SelectedMeals,
+		sub.SelectedDays,
+		sub.Allergies,
+		sub.TotalPrice,
+		userID.(int), // We assert the type of userID from the context to an int
 	).Scan(&id)
+
 	if err != nil {
-		fmt.Printf("Error inserting subscription: %v\n", err)
+		fmt.Printf("Error inserting subscription: %v\n", err) // Log error to console
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create subscription"})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"message": "Subscription created successfully!", "subscriptionId": id})
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Subscription created successfully!",
+		"subscriptionId": id,
+	})
 }
