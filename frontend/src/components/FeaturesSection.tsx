@@ -22,7 +22,7 @@ const FeaturesSection = () => {
 
   return (
     // We use a white background for this section to create a nice contrast with the red hero section.
-    <section className="py-20 bg-white">
+    <section className="py-30 bg-white">
       <div className="container mx-auto px-4 sm:px-8 text-center">
         <h2 className="text-3xl font-bold text-gray-800">Why Choose Us?</h2>
         <p className="text-gray-600 mt-2 mb-12">The best choice for your health and convenience.</p>

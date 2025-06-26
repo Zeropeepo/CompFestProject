@@ -20,7 +20,7 @@ type UserProfile = {
 
 export default function App() {
   const [activePage, setActivePage] = useState('Home');
-  const [authToken, setAuthToken] = useState<string | null>(null);
+  const [_, setAuthToken] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
 
   useEffect(() => {

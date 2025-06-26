@@ -1,7 +1,11 @@
 
-const HeroSection = () => {
+type HeroSectionProps = {
+    setActivePage?: (page: string) => void;
+};
+
+const HeroSection = ({ setActivePage }: HeroSectionProps) => {
   return (
-    <section className="bg-green-200/60 pt-25 pb-20">
+    <section className="bg-green-200/60 pt-25 pb-30">
       <div className="container mx-auto px-4 sm:px-8">
         <div className="grid md:grid-cols-2 gap-8 items-center">
           
@@ -17,7 +21,9 @@ const HeroSection = () => {
             </p>
             <div className="mt-8">
               {/* Updated button style to match the new theme */}
-              <button className="bg-gray-800 text-white font-bold hover:bg-gray-700 px-8 py-3 rounded-md text-base transition-colors">
+              <button 
+                onClick={() => setActivePage?.('Menu')}
+                className="bg-gray-800 text-white font-bold hover:bg-gray-700 px-8 py-3 rounded-md text-base transition-colors">
                 Explore Meal Plans
               </button>
             </div>

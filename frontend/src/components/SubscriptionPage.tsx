@@ -20,7 +20,6 @@ type SubscriptionPageProps = {
 // --- Main Component ---
 const SubscriptionPage = ({ currentUser }: SubscriptionPageProps) => {
 
-  const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [selectedPlan, setSelectedPlan] = useState<PlanName>('Protein Plan');
   const [selectedMeals, setSelectedMeals] = useState<string[]>(['Lunch']);

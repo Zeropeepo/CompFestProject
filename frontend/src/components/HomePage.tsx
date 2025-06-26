@@ -9,6 +9,7 @@ type UserProfile = {
   role: string;
 };
 
+
 type HomePageProps = {
   currentUser: UserProfile | null; 
   setActivePage: (page: string) => void;
@@ -17,7 +18,7 @@ type HomePageProps = {
 const HomePage = ({ currentUser, setActivePage }: HomePageProps) => {
   return (
     <>
-      <HeroSection />
+      <HeroSection setActivePage={setActivePage} />
       <FeaturesSection />
 
       <TestimonialsSection currentUser={currentUser} setActivePage={setActivePage} />
