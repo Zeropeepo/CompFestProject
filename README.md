@@ -3,6 +3,8 @@
 
 NevaSEA Catering is a web-based meal subscription platform that allows users to subscribe to meal plans and receive personalized catering recommendations powered by AI. The platform also supports seamless online payments via MidTrans.
 
+<br>
+
 ## 🧰 Tech Stack
 
 - **Frontend**: React + Tailwind CSS
@@ -31,7 +33,7 @@ This web app **has been deployed publicly** and could be accessed in:
 *(If u want to make a new one, u could use the register form)*
 
 
-
+<br>
 
 ## 🚀 Getting Started
 
@@ -44,6 +46,8 @@ Make sure you have the following installed:
 - PostgreSQL
 
 > Note: Frontend dependencies are managed via `npm`, and backend via `go mod`.
+
+<br>
 
 ## ⚙️ Project Structure
 
@@ -107,6 +111,14 @@ VITE_DEPLOY_API_URL=http://localhost:8080
 ```
 docker compose up --build
 ```
+> ⚠️ **Note**:  
+> If you encounter errors while running `docker-compose`, it's often due to missing or incorrectly configured `.env` files.  
+> Make sure you have created both:
+>
+> - `.env` in the **project root directory**
+> - `.env` inside the **backend/** directory
+>
+> These environment files are essential for Docker to pass the required configurations to your services.
 
 ## 🧑‍💻 Running Locally (Optional)
 
@@ -153,7 +165,7 @@ To test transactions using **credit card**, you can use the following test card 
 
 > 💡 You can find more test payment options in the official [MidTrans Sandbox Documentation](https://docs.midtrans.com/docs/sandbox-overview).
 
-
+&nbsp;
 ## 🛠 Database Initialization
 Use the file called db_docker_DDL to make the database structure.
 ```
@@ -218,3 +230,6 @@ INSERT INTO users (email, password, role) VALUES ('admin@example.com', 'hashed_p
 ## 📄 License
 
 For educational and prototype use only.
+
+
+
