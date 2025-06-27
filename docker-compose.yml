@@ -44,5 +44,9 @@ services:
     depends_on:
       - backend
 
+networks:
+  sea_network:
+    driver: bridge
+
 volumes:
   postgres_data:

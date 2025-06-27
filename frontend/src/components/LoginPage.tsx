@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 
 type LoginPageProps = {
@@ -22,7 +23,7 @@ const LoginPage = ({ onLoginSuccess }: LoginPageProps) => {
     const loginData = { email, password };
 
     try {
-      const response = await fetch('http://localhost:8080/api/login', {
+      const response = await fetch(`${import.meta.env.VITE_DEPLOY_API_URL}/api/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(loginData),
@@ -107,6 +108,15 @@ const LoginPage = ({ onLoginSuccess }: LoginPageProps) => {
             </button>
           </div>
         </form>
+
+        <div className="text-center mt-6">
+          <p className="text-sm">
+            <Link to="/register" className="font-medium text-green-600 hover:text-green-500">
+              Don't have an account yet?
+            </Link>
+          </p>
+        </div>
+
       </div>
     </div>
   );

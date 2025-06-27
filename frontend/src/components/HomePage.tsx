@@ -1,6 +1,9 @@
+// in HomePage.tsx
+
 import HeroSection from './HeroSection';
 import FeaturesSection from './FeaturesSection';
 import TestimonialsSection from './TestimonialsSection';
+
 
 type UserProfile = {
   id: number;
@@ -12,16 +15,15 @@ type UserProfile = {
 
 type HomePageProps = {
   currentUser: UserProfile | null; 
-  setActivePage: (page: string) => void;
 };
 
-const HomePage = ({ currentUser, setActivePage }: HomePageProps) => {
+
+const HomePage = ({ currentUser }: HomePageProps) => {
   return (
     <>
-      <HeroSection setActivePage={setActivePage} />
+      <HeroSection />
       <FeaturesSection />
-
-      <TestimonialsSection currentUser={currentUser} setActivePage={setActivePage} />
+      <TestimonialsSection currentUser={currentUser} />
     </>
   );
 };

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom'; // MODIFIED: Import Link for navigation
 import StarRating from './StarRating';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
@@ -19,13 +20,12 @@ type UserProfile = {
   role: string;
 };
 
-// Define the component's props
+// MODIFIED: Removed setActivePage from the component's props
 type TestimonialsSectionProps = {
   currentUser: UserProfile | null;
-  setActivePage: (page: string) => void;
 };
 
-const TestimonialsSection = ({ currentUser, setActivePage }: TestimonialsSectionProps) => {
+const TestimonialsSection = ({ currentUser }: TestimonialsSectionProps) => {
   // --- State Management ---
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [currentPage, setCurrentPage] = useState(0);
@@ -35,11 +35,11 @@ const TestimonialsSection = ({ currentUser, setActivePage }: TestimonialsSection
   const [newReview, setNewReview] = useState('');
   const [newRating, setNewRating] = useState(0);
 
-  // --- Data Fetching Effect ---
+  // --- Data Fetching Effect (Unchanged) ---
   useEffect(() => {
     const fetchTestimonials = async () => {
       try {
-        const response = await fetch('http://localhost:8080/api/testimonials');
+        const response = await fetch(`${import.meta.env.VITE_DEPLOY_API_URL}/api/testimonials`);
         if (!response.ok) throw new Error('Network response was not ok');
         const data = await response.json();
         const testimonialsWithAvatars = data.map((t: Testimonial) => ({
@@ -54,13 +54,13 @@ const TestimonialsSection = ({ currentUser, setActivePage }: TestimonialsSection
     fetchTestimonials();
   }, []);
 
-  // --- Pagination Logic ---
+  // --- Pagination Logic (Unchanged) ---
   const pageCount = Math.ceil(testimonials.length / ITEMS_PER_PAGE);
   const handlePrevPage = () => setCurrentPage((prev) => (prev > 0 ? prev - 1 : 0));
   const handleNextPage = () => setCurrentPage((prev) => (prev < pageCount - 1 ? prev + 1 : prev));
   const currentTestimonials = testimonials.slice(currentPage * ITEMS_PER_PAGE, (currentPage + 1) * ITEMS_PER_PAGE);
 
-  // --- Form Submission Logic ---
+  // --- Form Submission Logic (Unchanged) ---
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentUser || !newReview || newRating === 0) return;
@@ -78,7 +78,7 @@ const TestimonialsSection = ({ currentUser, setActivePage }: TestimonialsSection
         const token = localStorage.getItem('sea-catering-token');
         const csrfToken = localStorage.getItem('sea-catering-csrf');
 
-        const response = await fetch('http://localhost:8080/api/testimonials', {
+        const response = await fetch(`${import.meta.env.VITE_DEPLOY_API_URL}/api/testimonials`, {
             method: 'POST',
             headers: { 
                 'Content-Type': 'application/json',
@@ -118,7 +118,7 @@ const TestimonialsSection = ({ currentUser, setActivePage }: TestimonialsSection
           <p className="text-gray-600 mt-2">Real stories from our happy and healthy community.</p>
         </div>
 
-        {/* Paginated Display Grid */}
+        {/* Paginated Display Grid (Unchanged) */}
         <div className="relative mb-20 max-w-5xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 min-h-[16rem]">
             {testimonials.length > 0 ? (
@@ -139,7 +139,7 @@ const TestimonialsSection = ({ currentUser, setActivePage }: TestimonialsSection
             )}
           </div>
 
-          {/* Pagination Controls */}
+          {/* Pagination Controls (Unchanged) */}
           {pageCount > 1 && (
             <div className="flex justify-center items-center mt-8 space-x-4">
               <button onClick={handlePrevPage} disabled={currentPage === 0} className="bg-white rounded-full p-2 shadow-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed">
@@ -158,6 +158,7 @@ const TestimonialsSection = ({ currentUser, setActivePage }: TestimonialsSection
         {/* Conditional Form Rendering */}
         <div className="max-w-2xl mx-auto bg-white p-8 rounded-lg shadow-lg">
           {currentUser ? (
+            // Form for logged-in users (Unchanged)
             <>
               <h3 className="text-2xl font-bold text-gray-800 mb-6 text-center">Share Your Experience!</h3>
               <form onSubmit={handleFormSubmit} className="space-y-6">
@@ -191,15 +192,18 @@ const TestimonialsSection = ({ currentUser, setActivePage }: TestimonialsSection
               </form>
             </>
           ) : (
+            // Section for non-logged-in users
             <div className="text-center">
               <h3 className="text-2xl font-bold text-gray-800 mb-4">Want to share your story?</h3>
               <p className="text-gray-600 mb-6">Please log in to leave a review and help others on their health journey.</p>
-              <button
-                onClick={() => setActivePage('Login')}
+              
+              {/* MODIFIED: This now uses a Link component for proper navigation */}
+              <Link
+                to="/login"
                 className="bg-green-600 text-white font-bold py-3 px-6 rounded-md hover:bg-green-700 transition-colors"
               >
                 Login to Review
-              </button>
+              </Link>
             </div>
           )}
         </div>

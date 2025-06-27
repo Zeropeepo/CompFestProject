@@ -1,6 +1,20 @@
 import React, { useState, useEffect } from 'react';
 
-// --- Helper Data and Types ---
+// This global declaration is correct for using the Midtrans Snap script.
+declare global {
+  interface Window {
+    snap: {
+      pay: (snapToken: string, options?: {
+        onSuccess?: (result: any) => void;
+        onPending?: (result: any) => void;
+        onError?: (result: any) => void;
+        onClose?: () => void;
+      }) => void;
+    };
+  }
+}
+
+// --- Helper Data and Types (Unchanged) ---
 type PlanName = 'Diet Plan' | 'Protein Plan' | 'Royal Plan';
 const PLAN_PRICES: Record<PlanName, number> = { 'Diet Plan': 30000, 'Protein Plan': 40000, 'Royal Plan': 60000 };
 const MEAL_TYPES = ['Breakfast', 'Lunch', 'Dinner'];
@@ -27,8 +41,11 @@ const SubscriptionPage = ({ currentUser }: SubscriptionPageProps) => {
   const [allergies, setAllergies] = useState('');
   const [totalPrice, setTotalPrice] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitStatus, setSubmitStatus] = useState<'success' | 'error' | null>(null);
 
+  const [submitStatus, setSubmitStatus] = useState<'success' | 'error' | 'info' | null>(null);
+  const [statusMessage, setStatusMessage] = useState('');
+
+  // useEffect for price calculation is correct. (Unchanged)
   useEffect(() => {
     const planPrice = PLAN_PRICES[selectedPlan];
     const numMealTypes = selectedMeals.length;
@@ -42,6 +59,7 @@ const SubscriptionPage = ({ currentUser }: SubscriptionPageProps) => {
     }
   }, [selectedPlan, selectedMeals, selectedDays]);
 
+  // Helper functions for toggling selections are correct. (Unchanged)
   const handleMealToggle = (meal: string) => {
     setSelectedMeals(prev => prev.includes(meal) ? prev.filter(m => m !== meal) : [...prev, meal]);
   };
@@ -50,7 +68,7 @@ const SubscriptionPage = ({ currentUser }: SubscriptionPageProps) => {
     setSelectedDays(prev => prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]);
   };
 
-  // HANDLING FORM SUBMISSION
+  // HANDLING FORM SUBMISSION (Corrected Logic)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (selectedMeals.length === 0 || selectedDays.length === 0) {
@@ -58,41 +76,90 @@ const SubscriptionPage = ({ currentUser }: SubscriptionPageProps) => {
       return;
     }
 
-    setIsSubmitting(true); 
-    setSubmitStatus(null); 
+    setIsSubmitting(true);
+    setSubmitStatus(null);
+    setStatusMessage('Creating your subscription...');
 
-    const submissionData = { name: currentUser.fullName, 
-      phone, selectedPlan, selectedMeals, selectedDays, allergies, totalPrice };
+    const token = localStorage.getItem('sea-catering-token');
+    const csrfToken = localStorage.getItem('sea-catering-csrf');
 
     try {
-      const token = localStorage.getItem('sea-catering-token');
-      const csrfToken = localStorage.getItem('sea-catering-csrf');
-      const response = await fetch('http://localhost:8080/api/subscribe', {
+      // --- Step 1: Create a subscription with "pending" status (Unchanged) ---
+      const subData = {
+        name: currentUser.fullName, phone, selectedPlan, selectedMeals,
+        selectedDays, allergies, totalPrice
+      };
+
+      const subResponse = await fetch(`${import.meta.env.VITE_DEPLOY_API_URL}/api/subscribe`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
           'X-CSRF-Token': csrfToken || '',
         },
-        body: JSON.stringify(submissionData),
+        body: JSON.stringify(subData),
       });
 
-      if (!response.ok) {
-    
-        throw new Error('Network response was not ok.');
+      if (!subResponse.ok) throw new Error('Failed to create subscription record.');
+      
+      const subResult = await subResponse.json();
+      const { subscriptionId } = subResult;
+      
+      if (!subscriptionId) throw new Error('Subscription ID not received from server.');
+
+      setStatusMessage('Subscription created. Generating payment link...');
+
+      // --- Step 2: Create a Midtrans payment transaction (Corrected) ---
+      // FIX: Use the correct endpoint with the ID in the URL.
+      // FIX: Use a POST request with no body, as the backend handles it.
+      const paymentResponse = await fetch(`${import.meta.env.VITE_DEPLOY_API_URL}/api/subscriptions/${subscriptionId}/create-payment`, {
+          method: 'POST',
+          headers: {
+              'Authorization': `Bearer ${token}`,
+              'X-CSRF-Token': csrfToken || '',
+          },
+      });
+
+      if (!paymentResponse.ok) throw new Error('Failed to create payment transaction.');
+
+      const paymentResult = await paymentResponse.json();
+      const { snapToken } = paymentResult;
+
+      // --- Step 3: Open the Midtrans Snap payment pop-up (Corrected State Handling) ---
+      if (snapToken) {
+          window.snap.pay(snapToken, {
+              onSuccess: (result) => {
+                  setSubmitStatus('success');
+                  setStatusMessage(`Payment successful! Transaction ID: ${result.transaction_id}`);
+                  setIsSubmitting(false); 
+              },
+              onPending: (result) => {
+                  setSubmitStatus('info');
+                  setStatusMessage(`Your payment is pending. Order ID: ${result.order_id}`);
+                  setIsSubmitting(false); 
+              },
+              onError: (result) => {
+                  setSubmitStatus('error');
+                  setStatusMessage(`Payment failed. Please try again. Message: ${result.status_message}`);
+                  setIsSubmitting(false); 
+              },
+              onClose: () => {
+                  // Only set a message if payment was not already successful
+                  if (submitStatus !== 'success') {
+                      setSubmitStatus('info');
+                      setStatusMessage('Payment window closed. Your subscription is awaiting payment.');
+                      setIsSubmitting(false); 
+                  }
+              }
+          });
       }
 
-      
-      setSubmitStatus('success');
-
-
     } catch (error) {
-      console.error("Failed to submit subscription:", error);
       setSubmitStatus('error');
-    } finally {
-     
-      setIsSubmitting(false);
-    }
+      setStatusMessage(error instanceof Error ? error.message : "An unknown error occurred.");
+      setIsSubmitting(false); // Also reset loading state on initial fetch errors
+    } 
+    
   };
 
   const formatPrice = (price: number) => {
@@ -110,7 +177,7 @@ const SubscriptionPage = ({ currentUser }: SubscriptionPageProps) => {
 
           <form onSubmit={handleSubmit} className="grid md:grid-cols-2 gap-x-12 gap-y-8">
 
-            {/* LEFT COLUMN */}
+            {/* LEFT COLUMN (Unchanged) */}
             <div className="space-y-6">
               <h3 className="text-xl font-bold text-gray-700 border-b pb-2">1. Your Details</h3>
               <div className="bg-green-50 p-4 rounded-lg border border-green-200">
@@ -136,7 +203,7 @@ const SubscriptionPage = ({ currentUser }: SubscriptionPageProps) => {
               </div>
             </div>
 
-            {/* RIGHT COLUMN ABOUT MEALS */}
+            {/* RIGHT COLUMN (Unchanged except for status message) */}
             <div className="space-y-6">
               <h3 className="text-xl font-bold text-gray-700 border-b pb-2">2. Customize Your Meals</h3>
               <div>
@@ -157,12 +224,19 @@ const SubscriptionPage = ({ currentUser }: SubscriptionPageProps) => {
                 <p className="text-xs text-green-600">Calculated based on your selections. Billed monthly.</p>
               </div>
               <button type="submit" disabled={isSubmitting} className="w-full bg-gray-800 text-white font-bold py-3 px-4 rounded-md hover:bg-gray-700 transition-colors text-lg disabled:bg-gray-400">
-                {isSubmitting ? 'Submitting...' : 'Subscribe Now'}
+                {isSubmitting ? statusMessage : 'Subscribe & Pay Now'}
               </button>
 
-              {/* --- NEW: Success and Error Messages --- */}
-              {submitStatus === 'success' && <p className="text-green-600 font-semibold text-center mt-2">Subscription successful! Thank you for your order.</p>}
-              {submitStatus === 'error' && <p className="text-red-600 font-semibold text-center mt-2">Something went wrong. Please try again later.</p>}
+              {/* --- FIX: Dynamic Status Message Display --- */}
+              {statusMessage && (
+                <div className={`text-center mt-2 font-semibold ${
+                    submitStatus === 'success' ? 'text-green-600' : 
+                    submitStatus === 'error' ? 'text-red-600' : 
+                    'text-yellow-600'
+                }`}>
+                  {statusMessage}
+                </div>
+              )}
             </div>
           </form>
         </div>

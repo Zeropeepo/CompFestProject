@@ -56,7 +56,7 @@ const MenuPage = () => {
 
   return (
     <div className="container mx-auto pt-28 p-4 sm:p-8">
-      <div className="text-center mb-16 pt-12">
+      <div className="text-center mb-16 py-5">
         <h1 className="text-4xl font-extrabold text-gray-800">Our Meal Plans</h1>
         <p className="mt-4 text-lg text-gray-600">Deliciously healthy, crafted for you.</p>
       </div>

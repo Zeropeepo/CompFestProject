@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+
 	"github.com/Zeropeepo/sea-catering-backend/database"
 	"github.com/Zeropeepo/sea-catering-backend/handlers"
 	"github.com/Zeropeepo/sea-catering-backend/middleware"
@@ -13,13 +14,10 @@ import (
 
 func main() {
 
-	
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
-
-
 
 	// CONNECT DATABASE
 	if err := database.Connect(); err != nil {
@@ -30,7 +28,7 @@ func main() {
 	router := gin.Default()
 
 	config := cors.DefaultConfig()
-	config.AllowOrigins = []string{"http://localhost:3000"} 
+	config.AllowOrigins = []string{"http://localhost:3000"}
 	config.AllowMethods = []string{"POST", "GET", "OPTIONS", "PUT", "DELETE"}
 	config.AllowHeaders = []string{"Origin", "Content-Type", "Authorization", "X-CSRF-Token"}
 	router.Use(cors.New(config))
@@ -43,23 +41,25 @@ func main() {
 	}
 
 	protected := api.Group("/")
-        protected.Use(middleware.AuthMiddleware())
-        {
-            protected.POST("/subscribe", handlers.SubscribeHandler)
-            protected.POST("/testimonials", handlers.CreateTestimonialsHandler)
-			protected.GET("/me", handlers.GetUserProfileHandler)
-			protected.GET("/subscriptions", handlers.GetUserSubscriptionsHandler)
-			protected.PUT("/subscriptions/:id/status", handlers.UpdateSubscriptionStatusHandler)
-			protected.POST("/subscriptions/:id/ai-recommendation", handlers.GetAIRecommendationHandler)
-        }
+	protected.Use(middleware.AuthMiddleware())
+	{
+		protected.POST("/subscribe", handlers.SubscribeHandler)
+		protected.POST("/testimonials", handlers.CreateTestimonialsHandler)
+		protected.GET("/me", handlers.GetUserProfileHandler)
+		protected.GET("/subscriptions", handlers.GetUserSubscriptionsHandler)
+		protected.PUT("/subscriptions/:id/status", handlers.UpdateSubscriptionStatusHandler)
+		protected.POST("/subscriptions/:id/ai-recommendation", handlers.GetAIRecommendationHandler)
+
+		protected.POST("/midtrans/notification", handlers.MidtransNotificationHandler)
+		protected.POST("/subscriptions/:id/create-payment", handlers.CreatePaymentHandler)
+	}
 
 	admin := api.Group("/admin")
-        admin.Use(middleware.AdminMiddleware()) // Protect this whole group
-        {
-            admin.GET("/dashboard-stats", handlers.GetAdminDashboardHandler)
-        }
-	
+	admin.Use(middleware.AdminMiddleware()) // Protect this whole group
+	{
+		admin.GET("/dashboard-stats", handlers.GetAdminDashboardHandler)
+	}
 
-	fmt.Println("Backend server is running on http://localhost:8080")
+	fmt.Println(`Backend server is running on ${import.meta.env.VITE_DEPLOY_API_URL}`)
 	router.Run(":8080")
 }

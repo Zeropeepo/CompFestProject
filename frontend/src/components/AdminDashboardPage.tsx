@@ -67,7 +67,7 @@ const AdminDashboardPage = () => {
             const formattedStartDate = startDate.toISOString().split('T')[0];
             const formattedEndDate = endDate.toISOString().split('T')[0];
             try {
-                const response = await fetch(`http://localhost:8080/api/admin/dashboard-stats?startDate=${formattedStartDate}&endDate=${formattedEndDate}`, {
+                const response = await fetch(`${import.meta.env.VITE_DEPLOY_API_URL}/api/admin/dashboard-stats?startDate=${formattedStartDate}&endDate=${formattedEndDate}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (response.status === 403) throw new Error("Access Denied.");

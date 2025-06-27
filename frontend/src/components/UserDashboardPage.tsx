@@ -1,6 +1,24 @@
+// in UserDashboardPage.tsx
+
 import { useState, useEffect } from 'react';
-import { Sparkles } from 'lucide-react'; // Import a nice icon for the AI button
-import Modal from './Modal'; // We will use the existing Modal component
+import { Sparkles, CreditCard } from 'lucide-react'; // Import a nice icon for the AI and Pay buttons
+import Modal from './Modal';
+
+// This global declaration is correct for using the Midtrans Snap script.
+// Add this to your file if it's not already there.
+declare global {
+  interface Window {
+    snap: {
+      pay: (snapToken: string, options?: {
+        onSuccess?: (result: any) => void;
+        onPending?: (result: any) => void;
+        onError?: (result: any) => void;
+        onClose?: () => void;
+      }) => void;
+    };
+  }
+}
+
 
 // Type for a single subscription, matching the data from your API
 type Subscription = {
@@ -29,6 +47,9 @@ const UserDashboardPage = () => {
   const [isFetchingAI, setIsFetchingAI] = useState<number | null>(null); // Store the ID of the subscription being fetched
   const [aiError, setAiError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  // --- NEW: State for the payment process ---
+  const [isPaying, setIsPaying] = useState<number | null>(null); // Store ID of sub being paid
 
 
   useEffect(() => {
@@ -41,7 +62,7 @@ const UserDashboardPage = () => {
         return;
       }
       try {
-        const response = await fetch('http://localhost:8080/api/subscriptions', {
+        const response = await fetch(`${import.meta.env.VITE_DEPLOY_API_URL}/api/subscriptions`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (!response.ok) {
@@ -49,7 +70,8 @@ const UserDashboardPage = () => {
         }
         const data: Subscription[] = await response.json();
         setSubscriptions(data);
-      } catch (err) {
+      } catch (err)
+ {
         setError(err instanceof Error ? err.message : 'An unknown error occurred.');
       } finally {
         setLoading(false);
@@ -66,7 +88,7 @@ const UserDashboardPage = () => {
     const token = localStorage.getItem('sea-catering-token');
     const csrfToken = localStorage.getItem('sea-catering-csrf');
     try {
-        const response = await fetch(`http://localhost:8080/api/subscriptions/${subscriptionId}/status`, {
+        const response = await fetch(`${import.meta.env.VITE_DEPLOY_API_URL}/api/subscriptions/${subscriptionId}/status`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, 'X-CSRF-Token': csrfToken || '' },
             body: JSON.stringify({ status: newStatus }),
@@ -82,6 +104,56 @@ const UserDashboardPage = () => {
     }
   };
 
+  // --- NEW: Function to handle payment for a pending subscription ---
+  const handlePayNow = async (subscriptionId: number) => {
+    setIsPaying(subscriptionId);
+    const token = localStorage.getItem('sea-catering-token');
+    const csrfToken = localStorage.getItem('sea-catering-csrf');
+
+    try {
+      const paymentResponse = await fetch(`${import.meta.env.VITE_DEPLOY_API_URL}/api/subscriptions/${subscriptionId}/create-payment`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'X-CSRF-Token': csrfToken || '',
+        },
+      });
+
+      if (!paymentResponse.ok) {
+        throw new Error('Failed to create payment transaction.');
+      }
+
+      const paymentResult = await paymentResponse.json();
+      const { snapToken } = paymentResult;
+
+      if (snapToken) {
+        window.snap.pay(snapToken, {
+          onSuccess: (result) => {
+            alert('Payment successful! Your subscription will be activated shortly.');
+            // Optimistically update the UI. The webhook is the source of truth, but this gives immediate feedback.
+            setSubscriptions(prev => prev.map(sub => 
+              sub.id === subscriptionId ? { ...sub, status: 'active' } : sub
+            ));
+          },
+          onPending: (result) => {
+            alert('Your payment is pending. We will update the status upon confirmation.');
+          },
+          onError: (result) => {
+            alert(`Payment failed. Please try again. Reason: ${result.status_message}`);
+          },
+          onClose: () => {
+            // Payment window closed without a successful transaction.
+          }
+        });
+      }
+    } catch (error) {
+      alert((error as Error).message);
+    } finally {
+      setIsPaying(null); // Clear loading state for the pay button
+    }
+  };
+
+
   // Handling AI Recommendations
   const handleGetRecommendation = async (subscriptionId: number) => {
     setIsFetchingAI(subscriptionId); // Set the loading state for this specific button
@@ -92,7 +164,7 @@ const UserDashboardPage = () => {
     const csrfToken = localStorage.getItem('sea-catering-csrf');
 
     try {
-      const response = await fetch(`http://localhost:8080/api/subscriptions/${subscriptionId}/ai-recommendation`, {
+      const response = await fetch(`${import.meta.env.VITE_DEPLOY_API_URL}/api/subscriptions/${subscriptionId}/ai-recommendation`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -122,7 +194,6 @@ const UserDashboardPage = () => {
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(price);
   };
 
-  // --- This part of the return statement handles loading and error states for the main page ---
   if (loading) return <div className="container mx-auto p-8 pt-24 text-center">Loading your subscriptions...</div>;
   if (error) return <div className="container mx-auto p-8 pt-24 text-center text-red-500">{error}</div>;
 
@@ -137,12 +208,16 @@ const UserDashboardPage = () => {
                   {subscriptions.length > 0 ? (
                   subscriptions.map(sub => (
                       <div key={sub.id} className="bg-white p-6 rounded-xl shadow-md border border-gray-200">
-                          {/* Existing subscription card content */}
                           <div className="flex justify-between items-start">
                               <div>
                                   <h2 className="text-xl font-bold text-gray-800">{sub.planName}</h2>
                               </div>
-                              <span className={`capitalize px-3 py-1 text-sm font-semibold rounded-full ${ sub.status === 'active' ? 'bg-green-100 text-green-800' : sub.status === 'paused' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800' }`}>
+                              <span className={`capitalize px-3 py-1 text-sm font-semibold rounded-full ${ 
+                                  sub.status === 'active' ? 'bg-green-100 text-green-800' :
+                                  sub.status === 'paused' ? 'bg-yellow-100 text-yellow-800' :
+                                  sub.status === 'pending' ? 'bg-blue-100 text-blue-800' : // Style for pending
+                                  'bg-red-100 text-red-800'
+                              }`}>
                                   {sub.status}
                               </span>
                           </div>
@@ -153,12 +228,30 @@ const UserDashboardPage = () => {
                           </div>
 
                           <div className="mt-6 flex flex-wrap items-center gap-4">
-                              {/* Pause/Resume/Cancel buttons */}
+                              {/* --- MODIFIED BUTTONS AREA --- */}
+
+                              {/* PAY NOW button for pending subscriptions */}
+                              {sub.status === 'pending' && (
+                                <button 
+                                  onClick={() => handlePayNow(sub.id)}
+                                  disabled={isPaying === sub.id}
+                                  className="bg-blue-600 text-white px-4 py-2 rounded-md font-semibold hover:bg-blue-700 flex items-center gap-2 disabled:bg-gray-400"
+                                >
+                                  <CreditCard size={16} />
+                                  {isPaying === sub.id ? 'Processing...' : 'Pay Now'}
+                                </button>
+                              )}
+
+                              {/* Pause/Resume buttons */}
                               {sub.status === 'paused' && <button onClick={() => handleUpdateStatus(sub.id, 'active')} className="bg-green-600 text-white px-4 py-2 rounded-md font-semibold hover:bg-green-700">Resume</button>}
                               {sub.status === 'active' && <button onClick={() => handleUpdateStatus(sub.id, 'paused')} className="bg-yellow-500 text-white px-4 py-2 rounded-md font-semibold hover:bg-yellow-600">Pause</button>}
-                              {sub.status !== 'cancelled' && <button onClick={() => handleUpdateStatus(sub.id, 'cancelled')} className="bg-red-600 text-white px-4 py-2 rounded-md font-semibold hover:bg-red-700">Cancel</button>}
+                              
+                              {/* Cancel button */}
+                              {(sub.status === 'active' || sub.status === 'paused' || sub.status === 'pending') && (
+                                <button onClick={() => handleUpdateStatus(sub.id, 'cancelled')} className="bg-red-600 text-white px-4 py-2 rounded-md font-semibold hover:bg-red-700">Cancel</button>
+                              )}
 
-                              {/*  AI Recommendation Button --- */}
+                              {/* AI Recommendation Button --- */}
                               <button
                                 type="button"
                                 onClick={() => handleGetRecommendation(sub.id)}
