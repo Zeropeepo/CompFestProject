@@ -39,12 +39,13 @@ This web app **has been deployed publicly** and could be accessed in:
 
 ### 📦 Dependencies
 
-Make sure you have the following installed:
-- Go
-- Node.js & npm
-- Docker & Docker Compose
-- PostgreSQL
+- [Go](https://go.dev/doc/install) (recommended: v1.20 or above)
+- [Node.js & npm](https://nodejs.org/) (recommended: Node v18+)
+- [Docker](https://docs.docker.com/get-docker/) & [Docker Compose](https://docs.docker.com/compose/install/)
+- [PostgreSQL](https://www.postgresql.org/download/) (v13 or later)
 
+> 💡 **Tip**: You can check your versions using `go version`, `node -v`, `docker -v`, and `psql --version`.
+> 
 > Note: Frontend dependencies are managed via `npm`, and backend via `go mod`.
 
 <br>
