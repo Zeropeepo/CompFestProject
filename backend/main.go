@@ -12,10 +12,14 @@ import (
 )
 
 func main() {
+
+	
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
+
+
 
 	// CONNECT DATABASE
 	if err := database.Connect(); err != nil {
@@ -26,7 +30,7 @@ func main() {
 	router := gin.Default()
 
 	config := cors.DefaultConfig()
-	config.AllowOrigins = []string{"http://localhost:5173"} 
+	config.AllowOrigins = []string{"http://localhost:3000"} 
 	config.AllowMethods = []string{"POST", "GET", "OPTIONS", "PUT", "DELETE"}
 	config.AllowHeaders = []string{"Origin", "Content-Type", "Authorization", "X-CSRF-Token"}
 	router.Use(cors.New(config))
@@ -46,6 +50,7 @@ func main() {
 			protected.GET("/me", handlers.GetUserProfileHandler)
 			protected.GET("/subscriptions", handlers.GetUserSubscriptionsHandler)
 			protected.PUT("/subscriptions/:id/status", handlers.UpdateSubscriptionStatusHandler)
+			protected.POST("/subscriptions/:id/ai-recommendation", handlers.GetAIRecommendationHandler)
         }
 
 	admin := api.Group("/admin")

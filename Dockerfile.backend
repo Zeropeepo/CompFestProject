@@ -8,8 +8,11 @@ WORKDIR /app
 COPY backend/go.mod backend/go.sum ./
 RUN go mod download
 
+
 # Copy the rest of the backend source code
 COPY backend/ ./
+
+RUN go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
 
 # Build the application. The single dot tells it to build the main package in the current directory.
 # UPDATED: Changed ./... to .

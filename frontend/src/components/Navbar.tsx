@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Menu, X } from 'lucide-react';
 
+
 type NavbarProps = {
   isLoggedIn: boolean; 
   activePage: string;
@@ -30,14 +31,19 @@ const Navbar = ({ isLoggedIn, activePage, setActivePage, onLogout, userRole }: N
 
   return (
     <header className="absolute top-0 left-0 w-full z-10 px-4 sm:px-8 lg:px-16 py-5">
-      <div className="container mx-auto flex justify-between items-center">
+      <div className="container mx-auto flex justify-between items-center h-12">
         {/* Business Name */}
-        <a href="#" onClick={(e) => handleNavClick(e,'Home')} className="text-xl font-bold text-gray-800 hover:text-green-700 transition-colors">
-          SEA Catering
+        <a
+          href="#"
+          onClick={(e) => handleNavClick(e, 'Home')}
+          className="text-xl font-bold text-gray-800 hover:text-green-700 transition-colors flex items-center h-12"
+          style={{ lineHeight: '3rem' }} // tambahkan jika perlu
+        >
+          NevaSEA Catering
         </a>
 
         {/* --- DESKTOP NAVIGATION --- */}
-        <nav className="hidden md:flex items-center space-x-8 pb-5">
+        <nav className="hidden md:flex items-center space-x-8">
           {navLinks.map((link) => (
             <a key={link} href="#" onClick={(e) => handleNavClick(e, link)} className={`text-sm font-medium transition-colors hover:text-green-600 ${activePage === link ? 'text-green-600 font-semibold' : 'text-gray-600'}`}>
               {link}
