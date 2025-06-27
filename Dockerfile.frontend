@@ -31,8 +31,7 @@ RUN rm /etc/nginx/conf.d/default.conf
 
 # Next, copy the custom nginx.conf from your project root into the image.
 # We will create this nginx.conf file in the next step.
-COPY /nginx/nginx.conf /etc/nginx/conf.d/default.conf
-
+COPY /nginx/nginx.conf /etc/nginx/conf.d
 
 # Copy only the built output from the 'builder' stage into the Nginx server directory.
 COPY --from=builder /app/dist /usr/share/nginx/html
