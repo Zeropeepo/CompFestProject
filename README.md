@@ -1,8 +1,8 @@
 
-# NevaSEA Catering 🍱
+# 🍱 NevaSEA Catering 🍱
 
 NevaSEA Catering is a web-based meal subscription platform that allows users to subscribe to meal plans and receive personalized catering recommendations powered by AI. The platform also supports seamless online payments via MidTrans.
-
+> **GitHub Repository**: [github.com/Zeropeepo/CompFestProject](https://github.com/Zeropeepo/CompFestProject)
 <br>
 
 ## 🧰 Tech Stack
