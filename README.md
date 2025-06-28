@@ -28,7 +28,7 @@ This web app **has been deployed publicly** and could be accessed in:
 
 #### 👤 Normal Accounts
 - **Email**: `nepa@gmail.com`  
-- **Password**: `Admin123123!`
+- **Password**: `Neva123123!`
   
 *(If u want to make a new one, u could use the register form)*
 
