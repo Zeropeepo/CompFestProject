@@ -141,7 +141,7 @@ go run main.go
 
 ## 🧠 AI Recommendations
 
-Ensure that the `GEMINI_API_KEY` is set to enable AI-based meal recommendations powered by **Gemini (Google AI)**.
+There's an AI Feature which is gonna give AI-Based Meal recommendation based on the meal plan and your allergies, this feature is intended if the customer/user wants to request a certain food (UPCOMING FEATURES). Ensure that the `GEMINI_API_KEY` is set to enable AI-based meal recommendations powered by **Gemini (Google AI)**.
 
 ### 🔑 How to Get a Gemini API Key
 
