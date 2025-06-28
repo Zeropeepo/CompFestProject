@@ -208,7 +208,10 @@ CREATE TABLE public.subscriptions (
     delivery_days TEXT[] NOT NULL,
     allergies TEXT,
     total_price NUMERIC(10,2) NOT NULL,
-    status VARCHAR(20) NOT NULL DEFAULT 'active',
+    -- CORRECTED: Default status is now 'pending' to match application logic.
+    status VARCHAR(20) NOT NULL DEFAULT 'pending',
+    -- ADDED: The column to link to a specific Midtrans transaction.
+    midtrans_order_id VARCHAR(255) UNIQUE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
